@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Step 1: Supabase Polling Service (EXE 빌드용)
+Step 1: Supabase Polling Service (EXE 빌드용) - 설정 파일 사용 버전
 Supabase에서 데이터를 가져와 Step 2 API로 전송하는 폴링 서비스
 
 빌드 방법:
@@ -12,44 +12,73 @@ import json
 import time
 import requests
 import logging
+import configparser
 from datetime import datetime
 import sys
 import os
 from typing import Dict, List, Optional
+from pathlib import Path
 
-# ==================== 설정 변수 (여기만 수정하세요) ====================
+# 설정 파일 읽기
+def load_config():
+    """설정 파일 로드"""
+    config = configparser.ConfigParser()
+    
+    # 실행 파일 위치 기준으로 설정 파일 찾기
+    if getattr(sys, 'frozen', False):
+        # PyInstaller로 빌드된 경우
+        config_path = Path(sys.executable).parent / 'config_step1.ini'
+    else:
+        # 개발 환경
+        config_path = Path(__file__).parent / 'config_step1.ini'
+    
+    if not config_path.exists():
+        print(f"ERROR: 설정 파일을 찾을 수 없습니다: {config_path}")
+        print("config_step1.ini 파일을 생성해주세요.")
+        input("Press Enter to exit...")
+        sys.exit(1)
+    
+    config.read(config_path, encoding='utf-8')
+    return config
 
-# Supabase 설정
-SUPABASE_URL = 'https://yenfccoefczqxckbizqa.supabase.co'
-SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllbmZjY29lZmN6cXhja2JpenFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5NDkyNzksImV4cCI6MjA2MTUyNTI3OX0.U1iQUOaNPSrEHf1w_ePqgYzJiRO6Bi48E2Np2hY0nCQ'
-
-# 테이블 및 컬럼 설정
-TABLE_NAME = 'contents_idea'
-COLUMN_IS_FETCHED = 'is_fetched'
-COLUMN_IS_AUTO_CREATED = 'is_auto_created'
-COLUMN_ID = 'id'
-COLUMN_TITLE_KO = 'title_ko'
-COLUMN_TITLE_VI = 'title_vi'
-COLUMN_SCENARIO = 'scenario'
-COLUMN_COMPANY_ID = 'company_id'
-COLUMN_STORE_ID = 'store_id'
-
-# API 설정
-STEP2_API_URL = 'http://localhost:5001'
-API_TYPE = 'create_contents_on_user_idea'
-
-# 폴링 설정
-POLLING_INTERVAL = 30  # 초 단위
-BATCH_SIZE = 1  # 한 번에 가져올 데이터 개수
-RETRY_DELAY = 30  # API 오류 시 재시도 대기 시간
+# 설정 로드
+try:
+    config = load_config()
+    
+    # Supabase 설정
+    SUPABASE_URL = config.get('supabase', 'url')
+    SUPABASE_KEY = config.get('supabase', 'key')
+    
+    # 테이블 및 컬럼 설정
+    TABLE_NAME = config.get('supabase', 'table_name')
+    COLUMN_IS_FETCHED = config.get('supabase', 'column_is_fetched')
+    COLUMN_IS_AUTO_CREATED = config.get('supabase', 'column_is_auto_created')
+    COLUMN_ID = config.get('supabase', 'column_id')
+    COLUMN_TITLE_KO = config.get('supabase', 'column_title_ko')
+    COLUMN_TITLE_VI = config.get('supabase', 'column_title_vi')
+    
+    # API 설정
+    STEP2_API_URL = config.get('api', 'step2_url')
+    API_TYPE = config.get('api', 'api_type')
+    
+    # 폴링 설정
+    POLLING_INTERVAL = config.getint('polling', 'interval_seconds')
+    BATCH_SIZE = config.getint('polling', 'batch_size')
+    RETRY_DELAY = config.getint('polling', 'retry_delay_seconds')
+    
+    # 로그 설정
+    LOG_LEVEL = getattr(logging, config.get('logging', 'log_level', fallback='INFO'))
+    LOG_RETENTION_DAYS = config.getint('logging', 'log_retention_days')
+    
+except Exception as e:
+    print(f"ERROR: 설정 파일 읽기 실패: {e}")
+    print("config_step1.ini 파일을 확인해주세요.")
+    input("Press Enter to exit...")
+    sys.exit(1)
 
 # 로그 설정
-LOG_DIR = 'logs'  # 로그 디렉토리
+LOG_DIR = 'logs'
 LOG_FILE = 'step1_polling.log'
-LOG_LEVEL = logging.INFO
-LOG_RETENTION_DAYS = 1  # 로그 보관 일수
-
-# ========================================================================
 
 # 로그 디렉토리 생성
 def create_log_directory():
@@ -63,11 +92,9 @@ def cleanup_old_logs():
     try:
         log_path = os.path.join(LOG_DIR, LOG_FILE)
         if os.path.exists(log_path):
-            # 파일 수정 시간 확인
             file_modified_time = datetime.fromtimestamp(os.path.getmtime(log_path))
             current_time = datetime.now()
             
-            # 하루 이상 지난 로그 파일 삭제
             if (current_time - file_modified_time).days >= LOG_RETENTION_DAYS:
                 os.remove(log_path)
                 print(f"Old log file deleted: {log_path}")
@@ -82,21 +109,17 @@ def setup_logging():
     
     log_path = os.path.join(LOG_DIR, LOG_FILE)
     
-    # 로그 포맷터
     formatter = logging.Formatter(
         '%(asctime)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     
-    # 파일 핸들러
     file_handler = logging.FileHandler(log_path, encoding='utf-8')
     file_handler.setFormatter(formatter)
     
-    # 콘솔 핸들러
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
     
-    # 로거 설정
     logger = logging.getLogger(__name__)
     logger.setLevel(LOG_LEVEL)
     logger.addHandler(file_handler)
@@ -228,9 +251,10 @@ class SupabasePoller:
         logger.info(f"⏱️  폴링 간격: {POLLING_INTERVAL}초")
         logger.info(f"📦 배치 크기: {BATCH_SIZE}개")
         logger.info(f"📂 로그 위치: {os.path.join(LOG_DIR, LOG_FILE)}")
+        logger.info(f"⚙️  설정 파일: config_step1.ini")
         logger.info("=" * 60)
         
-        # 로그 정리 주기 설정 (하루에 한 번)
+        # 로그 정리 주기 설정
         last_cleanup = datetime.now()
         
         # 초기 Step 2 상태 확인
@@ -247,7 +271,7 @@ class SupabasePoller:
                     # 각 아이디어 처리
                     for idea in ideas:
                         self.process_idea(idea)
-                        time.sleep(0.5)  # 각 처리 사이 짧은 대기
+                        time.sleep(0.5)
                     
                     logger.info(f"📊 통계: 처리됨={self.processed_count}, 오류={self.error_count}")
                 else:

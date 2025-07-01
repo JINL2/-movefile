@@ -1,0 +1,130 @@
+# ========================================================================
+# 워크플로우 액션 블록 템플릿
+# 
+# 이 파일은 워크플로우에서 사용할 수 있는 액션 블록의 예시입니다.
+# step3_workflows/[워크플로우명]/blocks/ 폴더에 저장하세요.
+# ========================================================================
+
+# ======================== 클립보드 관련 액션 ========================
+
+# copy_field.txt - 특정 필드를 클립보드에 복사
+ACTION: copy
+SOURCE: {title_ko}
+DESCRIPTION: 한국어 제목을 클립보드에 복사
+
+# paste_clipboard.txt - 클립보드 내용 붙여넣기
+ACTION: paste
+METHOD: ctrl+v
+DESCRIPTION: 클립보드 내용을 현재 위치에 붙여넣기
+
+# ======================== 타이핑 관련 액션 ========================
+
+# type_text.txt - 텍스트 직접 입력
+ACTION: type
+TEXT: 안녕하세요, {company_id} 고객님
+SPEED: normal
+DESCRIPTION: 인사말 타이핑
+
+# type_field.txt - 필드 값 타이핑
+ACTION: type
+TEXT: {scenario.hook1}
+SPEED: fast
+DESCRIPTION: 시나리오 첫 번째 훅 타이핑
+
+# ======================== 마우스 관련 액션 ========================
+
+# click_position.txt - 특정 좌표 클릭
+ACTION: click
+X: 500
+Y: 300
+BUTTON: left
+DESCRIPTION: 화면 중앙 클릭
+
+# double_click.txt - 더블클릭
+ACTION: double_click
+X: 100
+Y: 200
+DESCRIPTION: 아이콘 더블클릭
+
+# ======================== 키보드 단축키 액션 ========================
+
+# save_file.txt - 파일 저장
+ACTION: key
+KEYS: ctrl+s
+DESCRIPTION: 현재 파일 저장
+
+# select_all.txt - 전체 선택
+ACTION: key
+KEYS: ctrl+a
+DESCRIPTION: 전체 텍스트 선택
+
+# ======================== 프로그램 실행 액션 ========================
+
+# open_notepad.txt - 메모장 열기
+ACTION: open_app
+APP: notepad.exe
+WAIT: 3
+DESCRIPTION: Windows 메모장 실행
+
+# open_browser.txt - 브라우저 열기
+ACTION: open_app
+APP: chrome.exe
+ARGS: https://www.google.com
+WAIT: 5
+DESCRIPTION: Chrome 브라우저로 구글 열기
+
+# ======================== 대기 액션 ========================
+
+# wait_2sec.txt - 2초 대기
+ACTION: wait
+SECONDS: 2
+DESCRIPTION: 2초간 대기
+
+# wait_loading.txt - 로딩 대기
+ACTION: wait_for
+ELEMENT: 로딩 완료
+TIMEOUT: 30
+DESCRIPTION: "로딩 완료" 텍스트가 나타날 때까지 대기 (최대 30초)
+
+# ======================== 창 제어 액션 ========================
+
+# switch_window.txt - 창 전환
+ACTION: switch_window
+TITLE: 메모장
+DESCRIPTION: 메모장 창으로 전환
+
+# maximize_window.txt - 창 최대화
+ACTION: window
+COMMAND: maximize
+DESCRIPTION: 현재 창 최대화
+
+# ======================== 조건부 액션 ========================
+
+# if_exists.txt - 요소가 있으면 실행
+ACTION: if_exists
+ELEMENT: 저장 버튼
+THEN: click_save
+ELSE: skip
+DESCRIPTION: 저장 버튼이 있으면 클릭
+
+# ======================== 스크린샷 액션 ========================
+
+# screenshot.txt - 스크린샷 저장
+ACTION: screenshot
+FILENAME: result_{timestamp}.png
+FOLDER: ./output/screenshots/
+DESCRIPTION: 현재 화면 스크린샷 저장
+
+# ======================== 변수 사용 예시 ========================
+# 
+# Supabase에서 가져온 데이터의 필드를 변수로 사용:
+# {id} - 데이터 ID
+# {title_ko} - 한국어 제목
+# {title_vi} - 베트남어 제목
+# {scenario.hook1} - 시나리오의 hook1 필드
+# {scenario.body1} - 시나리오의 body1 필드
+# {company_id} - 회사 ID
+# {store_id} - 매장 ID
+# {timestamp} - 현재 시간
+# 
+# ========================================================================

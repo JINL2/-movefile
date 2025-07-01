@@ -34,38 +34,45 @@ pyinstaller --onefile --name "Step2_API_Server" --hidden-import=flask --hidden-i
 build/
 ├── step1_polling_service.py    # Step 1 소스코드
 ├── step2_api_server.py         # Step 2 소스코드
+├── config_step1.ini            # Step 1 설정 파일
+├── config_step2.ini            # Step 2 설정 파일
 ├── build_windows.bat           # 빌드 스크립트
 ├── dist/                       # 빌드된 EXE 파일
 │   ├── Step1_Supabase_Polling.exe
-│   └── Step2_API_Server.exe
-└── step3_workflows/            # 워크플로우 폴더 (복사 필요)
+│   ├── Step2_API_Server.exe
+│   ├── config_step1.ini        # 설정 파일 (복사 필요)
+│   ├── config_step2.ini        # 설정 파일 (복사 필요)
+│   └── step3_workflows/        # 워크플로우 폴더 (복사 필요)
 ```
 
-## ⚙️ 설정 변경
+## ⚙️ 설정 변경 (빌드 후에도 수정 가능!)
 
-각 Python 파일 상단의 설정 변수 섹션에서 수정:
+### Step 1 설정 (config_step1.ini)
+```ini
+[supabase]
+url = https://your-supabase-url
+key = your-supabase-key
+table_name = contents_idea
 
-### Step 1 설정 (step1_polling_service.py)
-```python
-# Supabase 설정
-SUPABASE_URL = 'your-supabase-url'
-SUPABASE_KEY = 'your-supabase-key'
-
-# 테이블 설정
-TABLE_NAME = 'contents_idea'
-COLUMN_IS_FETCHED = 'is_fetched'
-
-# 폴링 설정
-POLLING_INTERVAL = 10  # 초
+[polling]
+interval_seconds = 10
+batch_size = 5
 ```
 
-### Step 2 설정 (step2_api_server.py)
-```python
-# 서버 설정
-SERVER_PORT = 5001
+### Step 2 설정 (config_step2.ini)
+```ini
+[server]
+port = 5001
 
-# 워크플로우 경로
-WORKFLOW_BASE_PATH = '../step3_workflows'
+[workflow]
+# 상대 경로 또는 절대 경로 사용 가능
+base_path = ./step3_workflows
+# 또는
+# base_path = C:/workflow/step3_workflows
+
+[mapping]
+# API 타입 = 워크플로우 이름
+create_contents_on_user_idea = create_contents
 ```
 
 ## 🚀 실행 방법
@@ -78,14 +85,15 @@ WORKFLOW_BASE_PATH = '../step3_workflows'
    - `Step1_Supabase_Polling.exe` 더블클릭
    - 콘솔창에 "Supabase 폴링 서비스 시작" 확인
 
-3. **워크플로우 폴더 준비**
-   - exe 파일과 같은 위치에 `step3_workflows` 폴더 복사
-   - 폴더 구조:
+3. **필수 파일 준비**
+   - exe 파일과 같은 위치에 다음 파일들 복사:
      ```
      실행파일위치/
      ├── Step1_Supabase_Polling.exe
      ├── Step2_API_Server.exe
-     └── step3_workflows/
+     ├── config_step1.ini          # Step 1 설정
+     ├── config_step2.ini          # Step 2 설정
+     └── step3_workflows/          # 워크플로우 폴더
          └── create_contents/
              ├── main.py
              └── output/

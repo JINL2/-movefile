@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Step 2: Workflow API Server (EXE 빌드용)
+Step 2: Workflow API Server (EXE 빌드용) - 설정 파일 사용 버전
 워크플로우 실행을 관리하는 API 서버
 
 빌드 방법:
@@ -14,6 +14,7 @@ import json
 import time
 import logging
 import subprocess
+import configparser
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, List
@@ -24,35 +25,67 @@ import uuid
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-# ==================== 설정 변수 (여기만 수정하세요) ====================
+# 설정 파일 읽기
+def load_config():
+    """설정 파일 로드"""
+    config = configparser.ConfigParser()
+    
+    # 실행 파일 위치 기준으로 설정 파일 찾기
+    if getattr(sys, 'frozen', False):
+        # PyInstaller로 빌드된 경우
+        base_path = Path(sys.executable).parent
+        config_path = base_path / 'config_step2.ini'
+    else:
+        # 개발 환경
+        base_path = Path(__file__).parent
+        config_path = base_path / 'config_step2.ini'
+    
+    if not config_path.exists():
+        print(f"ERROR: 설정 파일을 찾을 수 없습니다: {config_path}")
+        print("config_step2.ini 파일을 생성해주세요.")
+        input("Press Enter to exit...")
+        sys.exit(1)
+    
+    config.read(config_path, encoding='utf-8')
+    return config, base_path
 
-# 서버 설정
-SERVER_HOST = '0.0.0.0'  # 모든 IP에서 접속 가능
-SERVER_PORT = 5001
-SERVER_DEBUG = False  # 프로덕션에서는 False
-
-# 워크플로우 설정
-WORKFLOW_BASE_PATH = '../step3_workflows'  # 워크플로우 폴더 경로
-DEFAULT_WORKFLOW = 'create_contents'  # 기본 워크플로우
-WORKFLOW_TIMEOUT = 300  # 워크플로우 실행 제한 시간 (초)
-
-# 워크플로우 매핑
-WORKFLOW_MAPPING = {
-    'create_contents_on_user_idea': 'create_contents',
-    # 추가 매핑은 여기에
-}
+# 설정 로드
+try:
+    config, BASE_PATH = load_config()
+    
+    # 서버 설정
+    SERVER_HOST = config.get('server', 'host')
+    SERVER_PORT = config.getint('server', 'port')
+    SERVER_DEBUG = config.getboolean('server', 'debug')
+    
+    # 워크플로우 설정
+    WORKFLOW_BASE_PATH = config.get('workflow', 'base_path')
+    DEFAULT_WORKFLOW = config.get('workflow', 'default_workflow')
+    WORKFLOW_TIMEOUT = config.getint('workflow', 'timeout_seconds')
+    
+    # 워크플로우 매핑 읽기
+    WORKFLOW_MAPPING = {}
+    if config.has_section('mapping'):
+        for key, value in config.items('mapping'):
+            WORKFLOW_MAPPING[key] = value
+    
+    # 큐 설정
+    MAX_QUEUE_SIZE = config.getint('queue', 'max_queue_size')
+    WORKER_THREADS = config.getint('queue', 'worker_threads')
+    
+    # 로그 설정
+    LOG_LEVEL = getattr(logging, config.get('logging', 'log_level', fallback='INFO'))
+    LOG_RETENTION_DAYS = config.getint('logging', 'log_retention_days')
+    
+except Exception as e:
+    print(f"ERROR: 설정 파일 읽기 실패: {e}")
+    print("config_step2.ini 파일을 확인해주세요.")
+    input("Press Enter to exit...")
+    sys.exit(1)
 
 # 로그 설정
-LOG_DIR = 'logs'  # 로그 디렉토리
+LOG_DIR = 'logs'
 LOG_FILE = 'step2_api_server.log'
-LOG_LEVEL = logging.INFO
-LOG_RETENTION_DAYS = 1  # 로그 보관 일수
-
-# 큐 설정
-MAX_QUEUE_SIZE = 100  # 최대 큐 크기
-WORKER_THREADS = 2  # 워커 스레드 수
-
-# ========================================================================
 
 # 로그 디렉토리 생성
 def create_log_directory():
@@ -66,11 +99,9 @@ def cleanup_old_logs():
     try:
         log_path = os.path.join(LOG_DIR, LOG_FILE)
         if os.path.exists(log_path):
-            # 파일 수정 시간 확인
             file_modified_time = datetime.fromtimestamp(os.path.getmtime(log_path))
             current_time = datetime.now()
             
-            # 하루 이상 지난 로그 파일 삭제
             if (current_time - file_modified_time).days >= LOG_RETENTION_DAYS:
                 os.remove(log_path)
                 print(f"Old log file deleted: {log_path}")
@@ -85,21 +116,17 @@ def setup_logging():
     
     log_path = os.path.join(LOG_DIR, LOG_FILE)
     
-    # 로그 포맷터
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     
-    # 파일 핸들러
     file_handler = logging.FileHandler(log_path, encoding='utf-8')
     file_handler.setFormatter(formatter)
     
-    # 콘솔 핸들러
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
     
-    # 로거 설정
     logger = logging.getLogger(__name__)
     logger.setLevel(LOG_LEVEL)
     logger.addHandler(file_handler)
@@ -172,15 +199,25 @@ workflow_queue = WorkflowQueue()
 
 def get_workflow_path(workflow_id: str) -> Path:
     """워크플로우 경로 가져오기"""
-    # 실행 파일 위치 기준으로 경로 설정
-    if getattr(sys, 'frozen', False):
-        # PyInstaller로 빌드된 경우
-        base_path = Path(sys.executable).parent
+    # 상대 경로인 경우 BASE_PATH 기준으로 해석
+    if WORKFLOW_BASE_PATH.startswith('./') or WORKFLOW_BASE_PATH.startswith('.\\'):
+        workflow_base = BASE_PATH / WORKFLOW_BASE_PATH[2:]
+    elif WORKFLOW_BASE_PATH.startswith('/') or (len(WORKFLOW_BASE_PATH) > 1 and WORKFLOW_BASE_PATH[1] == ':'):
+        # 절대 경로
+        workflow_base = Path(WORKFLOW_BASE_PATH)
     else:
-        # 개발 환경
-        base_path = Path(__file__).parent
+        # 기본 상대 경로
+        workflow_base = BASE_PATH / WORKFLOW_BASE_PATH
     
-    workflow_path = base_path / WORKFLOW_BASE_PATH / workflow_id
+    workflow_path = workflow_base / workflow_id
+    
+    # 디버그 정보
+    logger.debug(f"BASE_PATH: {BASE_PATH}")
+    logger.debug(f"WORKFLOW_BASE_PATH: {WORKFLOW_BASE_PATH}")
+    logger.debug(f"workflow_base: {workflow_base}")
+    logger.debug(f"workflow_path: {workflow_path}")
+    logger.debug(f"workflow_path exists: {workflow_path.exists()}")
+    
     return workflow_path
 
 def execute_workflow(job: dict):
@@ -199,7 +236,8 @@ def execute_workflow(job: dict):
         workflow_path = get_workflow_path(workflow_id)
         
         if not workflow_path.exists():
-            raise Exception(f"Workflow not found: {workflow_id}")
+            logger.error(f"Workflow not found at: {workflow_path}")
+            raise Exception(f"Workflow not found: {workflow_id} at {workflow_path}")
         
         # 파라미터 저장
         data_file = workflow_path / "_data.json"
@@ -296,6 +334,7 @@ def index():
         'name': 'Workflow Automation API',
         'version': '2.0',
         'status': 'running',
+        'config_file': 'config_step2.ini',
         'endpoints': {
             'GET /status': '시스템 상태',
             'GET /workflows': '워크플로우 목록',
@@ -340,6 +379,8 @@ def list_workflows():
         workflows = []
         workflow_base = get_workflow_path('')
         
+        logger.info(f"Listing workflows from: {workflow_base}")
+        
         if workflow_base.exists():
             for item in workflow_base.iterdir():
                 if item.is_dir() and not item.name.startswith('_'):
@@ -348,12 +389,15 @@ def list_workflows():
                         'name': item.name.replace('_', ' ').title(),
                         'available': True
                     })
+        else:
+            logger.warning(f"Workflow base path does not exist: {workflow_base}")
         
         return jsonify({
             'success': True,
             'workflows': workflows
         })
     except Exception as e:
+        logger.error(f"Error listing workflows: {str(e)}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -374,6 +418,7 @@ def run_workflow(workflow_id):
         # 워크플로우 존재 확인
         workflow_path = get_workflow_path(workflow_id)
         if not workflow_path.exists():
+            logger.error(f"Workflow not found: {workflow_id} at {workflow_path}")
             return jsonify({
                 'success': False,
                 'error': f'Workflow not found: {workflow_id}'
@@ -428,6 +473,7 @@ def main():
     logger.info(f"📂 Workflow Path: {WORKFLOW_BASE_PATH}")
     logger.info(f"👷 Worker Threads: {WORKER_THREADS}")
     logger.info(f"📂 로그 위치: {os.path.join(LOG_DIR, LOG_FILE)}")
+    logger.info(f"⚙️  설정 파일: config_step2.ini")
     logger.info("=" * 60)
     
     # 워커 스레드 시작
