@@ -1,0 +1,93 @@
+{
+  "name": "Create Contents from User Idea",
+  "version": "1.0.0",
+  "description": "사용자가 생성한 아이디어를 기반으로 콘텐츠를 자동 생성하는 워크플로우",
+  "created_at": "2025-01-01",
+  "author": "Workflow Automation System",
+  
+  "inputs": {
+    "idea_id": {
+      "type": "integer",
+      "required": true,
+      "description": "콘텐츠 아이디어 ID"
+    },
+    "title_vi": {
+      "type": "string",
+      "required": true,
+      "description": "베트남어 제목"
+    },
+    "title_ko": {
+      "type": "string",
+      "required": false,
+      "description": "한국어 제목"
+    },
+    "scenario": {
+      "type": "object",
+      "required": true,
+      "description": "시나리오 데이터 (hook1, body1, hook2, body2, conclusion)"
+    },
+    "company_id": {
+      "type": "string",
+      "required": false,
+      "description": "회사 ID"
+    },
+    "store_id": {
+      "type": "string",
+      "required": false,
+      "description": "매장 ID"
+    }
+  },
+  
+  "steps": [
+    {
+      "id": "validate_input",
+      "name": "입력 데이터 검증",
+      "description": "필수 필드 확인 및 데이터 유효성 검사"
+    },
+    {
+      "id": "translate_content",
+      "name": "콘텐츠 번역",
+      "description": "베트남어를 한국어로 번역 (필요시)"
+    },
+    {
+      "id": "generate_script",
+      "name": "스크립트 생성",
+      "description": "시나리오를 기반으로 상세 스크립트 생성"
+    },
+    {
+      "id": "create_visuals",
+      "name": "비주얼 생성",
+      "description": "이미지, 비디오 등 시각 자료 생성"
+    },
+    {
+      "id": "generate_captions",
+      "name": "캡션 생성",
+      "description": "소셜미디어용 캡션 및 해시태그 생성"
+    },
+    {
+      "id": "optimize_content",
+      "name": "콘텐츠 최적화",
+      "description": "플랫폼별 최적화 (TikTok, Instagram 등)"
+    },
+    {
+      "id": "save_output",
+      "name": "결과 저장",
+      "description": "생성된 콘텐츠를 지정된 위치에 저장"
+    }
+  ],
+  
+  "outputs": {
+    "content_files": {
+      "type": "array",
+      "description": "생성된 콘텐츠 파일 목록"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "콘텐츠 메타데이터 (캡션, 해시태그 등)"
+    },
+    "status": {
+      "type": "string",
+      "description": "처리 상태 (success/failed)"
+    }
+  }
+}

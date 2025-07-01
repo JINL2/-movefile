@@ -1,0 +1,15 @@
+{
+  "id": 396,
+  "api_type": "create_contents_on_user_idea",
+  "title_vi": "Test Vietnamese Title - 2025. 7. 1. 오후 3:43:12",
+  "title_ko": "테스트 한국어 제목 - 2025. 7. 1. 오후 3:43:12",
+  "scenario": {
+    "body1": "테스트 본문 1",
+    "body2": "테스트 본문 2",
+    "hook1": "테스트 훅 1",
+    "hook2": "테스트 훅 2",
+    "conclusion": "테스트 결론"
+  },
+  "is_auto_created": false,
+  "is_fetched": false
+}

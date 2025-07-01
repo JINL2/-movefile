@@ -1,0 +1,73 @@
+{
+  "idea_id": 396,
+  "processed_at": "2025-07-01T16:07:37.116088",
+  "title": "테스트 한국어 제목 - 2025. 7. 1. 오후 3:43:12",
+  "script": {
+    "title": "테스트 한국어 제목 - 2025. 7. 1. 오후 3:43:12",
+    "scenes": [
+      {
+        "type": "hook",
+        "number": 1,
+        "content": "테스트 훅 1",
+        "duration": 3
+      },
+      {
+        "type": "body",
+        "number": 1,
+        "content": "테스트 본문 1",
+        "duration": 10
+      },
+      {
+        "type": "hook",
+        "number": 2,
+        "content": "테스트 훅 2",
+        "duration": 3
+      },
+      {
+        "type": "body",
+        "number": 2,
+        "content": "테스트 본문 2",
+        "duration": 10
+      },
+      {
+        "type": "conclusion",
+        "content": "테스트 결론",
+        "duration": 5
+      }
+    ]
+  },
+  "visuals": {
+    "thumbnail": "thumbnail_idea_396.jpg",
+    "images": [
+      "scene_1_idea_396.jpg",
+      "scene_2_idea_396.jpg"
+    ],
+    "video": "content_idea_396.mp4"
+  },
+  "captions": {
+    "main_caption": "테스트 한국어 제목 - 2025. 7. 1. 오후 3:43:12 - Test Vietnamese Title - 2025. 7. 1. 오후 3:43:12",
+    "hashtags": [
+      "#콘텐츠",
+      "#아이디어",
+      "#idea_396",
+      "#viral",
+      "#trending"
+    ],
+    "platform_specific": {
+      "tiktok": "TikTok용 짧은 캡션",
+      "instagram": "Instagram용 긴 캡션"
+    }
+  },
+  "optimizations": {
+    "tiktok": {
+      "aspect_ratio": "9:16",
+      "max_duration": 60,
+      "format": "mp4"
+    },
+    "instagram": {
+      "aspect_ratio": "1:1",
+      "max_duration": 90,
+      "format": "mp4"
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "idea_id": 999,
+  "processed_at": "2025-07-01T16:03:20.102961",
+  "title": "테스트 한국어 제목",
+  "script": {
+    "title": "테스트 한국어 제목",
+    "scenes": [
+      {
+        "type": "hook",
+        "number": 1,
+        "content": "테스트 훅1",
+        "duration": 3
+      },
+      {
+        "type": "body",
+        "number": 1,
+        "content": "테스트 본문1",
+        "duration": 10
+      }
+    ]
+  },
+  "visuals": {
+    "thumbnail": "thumbnail_idea_999.jpg",
+    "images": [
+      "scene_1_idea_999.jpg",
+      "scene_2_idea_999.jpg"
+    ],
+    "video": "content_idea_999.mp4"
+  },
+  "captions": {
+    "main_caption": "테스트 한국어 제목 - Test Vietnamese Title",
+    "hashtags": [
+      "#콘텐츠",
+      "#아이디어",
+      "#idea_999",
+      "#viral",
+      "#trending"
+    ],
+    "platform_specific": {
+      "tiktok": "TikTok용 짧은 캡션",
+      "instagram": "Instagram용 긴 캡션"
+    }
+  },
+  "optimizations": {
+    "tiktok": {
+      "aspect_ratio": "9:16",
+      "max_duration": 60,
+      "format": "mp4"
+    },
+    "instagram": {
+      "aspect_ratio": "1:1",
+      "max_duration": 90,
+      "format": "mp4"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "idea_id": 395,
+  "title_vi": "Cách làm món phở bò ngon tại nhà",
+  "title_ko": "집에서 맛있는 소고기 쌀국수 만드는 법",
+  "scenario": {
+    "hook1": "Bạn có muốn thưởng thức một tô phở bò ngon như ngoài hàng ngay tại nhà?",
+    "body1": "Hôm nay tôi sẽ chia sẻ bí quyết nấu phở bò chuẩn vị Hà Nội với nguyên liệu dễ tìm",
+    "hook2": "Điều quan trọng nhất là nước dùng phải trong và ngọt tự nhiên",
+    "body2": "Ninh xương bò trong 8 tiếng với gừng nướng, hành tây, quế, hồi",
+    "conclusion": "Với công thức này, bạn sẽ có một tô phở thơm ngon không kém gì ngoài hàng!"
+  },
+  "company_id": "ebd66ba7-fde7-4332-b6b5-0d8a7f615497",
+  "store_id": "16f4c231-185a-4564-b473-bad1e9b305e8",
+  "created_at": "2025-01-01T10:00:00Z",
+  "is_auto_created": false,
+  "is_fetched": false
+}
